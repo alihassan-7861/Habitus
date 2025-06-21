@@ -1,11 +1,199 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-<body>
-    
-</body>
-</html>
+{% extends 'vectorizer_tool/main.html' %}
+{% load static %}
+
+
+{% block content %}
+<br>
+<div class="container">
+    <!-- Vectorizer Header -->
+    <header class="header">
+        <h2 class="title">malango® – Vectorizer AI <hr></h2>
+        <div class="description">
+            <div class="indicator"></div>
+            <span>Uses the malango® color palette with 549 colors for vectorization.</span>
+        </div>
+    </header>
+
+    <!-- Parameters Section -->
+    <section class="parameters-section">
+        <h3 class="section-title">parameter</h3>
+
+        <form class="parameters-form" id="parametersForm">
+            <div class="parameters-grid">
+                <!-- Width -->
+                <div class="settings-box">
+                    <div class="form-group">
+                        <div class="label-with-tooltip">
+                            <label for="width">Width (cm):</label>
+                            <button type="button" class="tooltip-btn" data-tooltip="Set the width of the output in centimeters">?</button>
+                        </div>
+                        <div class="input-with-tooltip">
+                            <input type="number" id="width" name="width">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Height -->
+                <div class="settings-box">
+                    <div class="form-group">
+                        <div class="label-with-tooltip">
+                            <label for="height">Height (cm):</label>
+                            <button type="button" class="tooltip-btn" data-tooltip="Set the height of the output in centimeters">?</button>
+                        </div>
+                        <div class="input-with-tooltip">
+                            <input type="number" id="height" name="height">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mode -->
+                <div class="settings-box">
+                    <div class="form-group">
+                        <div class="label-with-tooltip">
+                            <label>Mode:</label>
+                            <button type="button" class="tooltip-btn" data-tooltip="Choose between preview and production mode">?</button>
+                        </div>
+                        <div class="input-with-tooltip">
+                            <div class="radio-group">
+                                <label class="radio-label">
+                                    <input type="radio" name="mode" value="test" checked>
+                                    <span class="radio-custom"></span> Test
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="mode" value="preview">
+                                    <span class="radio-custom"></span> Preview
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="mode" value="production">
+                                    <span class="radio-custom"></span> Production
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Output Format -->
+                <div class="settings-box">
+                    <div class="form-group">
+                        <div class="label-with-tooltip">
+                            <label>Output format:</label>
+                            <button type="button" class="tooltip-btn" data-tooltip="Select the output file format">?</button>
+                        </div>
+                        <div class="input-with-tooltip">
+                            <div class="radio-group">
+                                <label class="radio-label">
+                                    <input type="radio" name="output_format" value="png" checked>
+                                    <span class="radio-custom"></span> PNG
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="output_format" value="svg">
+                                    <span class="radio-custom"></span> SVG
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Level of Detail -->
+                <div class="settings-box">
+                    <div class="form-group">
+                        <div class="label-with-tooltip">
+                            <label for="detail">Level of detail:</label>
+                            <button type="button" class="tooltip-btn" data-tooltip="Set the level of detail for vectorization">?</button>
+                        </div>
+                        <div class="input-with-tooltip">
+                            <input type="number" id="detail" name="level_of_details">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Smoothing -->
+                <div class="settings-box">
+                    <div class="form-group">
+                        <div class="label-with-tooltip">
+                            <label for="smoothing">Smoothing:</label>
+                            <button type="button" class="tooltip-btn" data-tooltip="Select the smoothing level for the output">?</button>
+                        </div>
+                        <div class="input-with-tooltip">
+                            <select id="smoothing" name="smoothing">
+                                <option value="un-aliased" selected>Un-aliased</option>
+                                <option value="aliased">Aliased</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Minimum Area -->
+                <div class="settings-box">
+                    <div class="form-group">
+                        <div class="label-with-tooltip">
+                            <label for="minArea">Minimum area (px):</label>
+                            <button type="button" class="tooltip-btn" data-tooltip="Set the minimum area in pixels">?</button>
+                        </div>
+                        <div class="input-with-tooltip">
+                            <input type="number" id="minArea" name="minimum_area">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Maximum Colors -->
+                <div class="settings-box">
+                    <div class="form-group">
+                        <div class="label-with-tooltip">
+                            <label for="maxColors">Maximum colors:</label>
+                            <button type="button" class="tooltip-btn" data-tooltip="Maximum number of colors to use">?</button>
+                        </div>
+                        <div class="input-with-tooltip">
+                            <input type="number" id="maxColors" name="maximum_colors">
+                            <div class="help-text">Maximum 549 colors available in the malango® palette</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="form-actions">
+                <button type="submit" class="vectorize-btn">Vectorize</button>
+            </div>
+        </form>
+    </section>
+
+    <!-- Image Processing Section -->
+    <section class="image-section">
+        <div class="image-container">
+            <!-- Original Image Upload -->
+            <div class="image-panel">
+                <h4 class="panel-title">Original image</h4>
+                <div class="upload-area" id="uploadArea">
+                    <button class="browse-btn" id="browseBtn">Browse</button>
+                    <input type="file" id="fileInput" accept="image/*" style="display: none;">
+                    <div class="upload-placeholder">
+                        <p>Upload image here or place via drag & drop</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vectorized Output -->
+            <div class="image-panel">
+                <h4 class="panel-title">Vectorized output</h4>
+                <div class="output-area" id="outputArea">
+                    <div class="output-placeholder">
+                        <p>The result is displayed here</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div id="loadingSpinner" style="display:none; text-align:center; margin-top:20px;">
+    <img src="{% static 'images/spinner.png' %}" alt="Loading..." width="50" height="50">
+    <p style="color: #555; font-weight: 500;">Processing...</p>
+</div>
+</div>
+
+<!-- Tooltip -->
+<div class="tooltip" id="tooltip"></div>
+
+<!-- External JS -->
+<script src="{% static 'js/vectorize.js' %}"></script>
+{% endblock %}
