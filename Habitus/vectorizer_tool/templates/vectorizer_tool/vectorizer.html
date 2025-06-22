@@ -28,7 +28,7 @@
                             <button type="button" class="tooltip-btn" data-tooltip="Set the width of the output in centimeters">?</button>
                         </div>
                         <div class="input-with-tooltip">
-                            <input type="number" id="width" name="width">
+                            <input type="number" id="width" name="width" step="0.01">
                         </div>
                     </div>
                 </div>
@@ -41,7 +41,7 @@
                             <button type="button" class="tooltip-btn" data-tooltip="Set the height of the output in centimeters">?</button>
                         </div>
                         <div class="input-with-tooltip">
-                            <input type="number" id="height" name="height">
+                            <input type="number" id="height" name="height" step="0.01">
                         </div>
                     </div>
                 </div>
@@ -102,7 +102,7 @@
                             <button type="button" class="tooltip-btn" data-tooltip="Set the level of detail for vectorization">?</button>
                         </div>
                         <div class="input-with-tooltip">
-                            <input type="number" id="detail" name="level_of_details">
+                            <input type="number" id="detail" name="level_of_details" step="0.01" min="0.01" max="10.0">
                         </div>
                     </div>
                 </div>
@@ -116,7 +116,7 @@
                         </div>
                         <div class="input-with-tooltip">
                             <select id="smoothing" name="smoothing">
-                                <option value="un-aliased" selected>Un-aliased</option>
+                                <option value="anti_aliased" selected>Un-aliased</option>
                                 <option value="aliased">Aliased</option>
                             </select>
                         </div>
@@ -144,7 +144,7 @@
                             <button type="button" class="tooltip-btn" data-tooltip="Maximum number of colors to use">?</button>
                         </div>
                         <div class="input-with-tooltip">
-                            <input type="number" id="maxColors" name="maximum_colors">
+                            <input id="maxColors" type="number" name="maximum_colors"> <!-- ✅ Correct -->
                             <div class="help-text">Maximum 549 colors available in the malango® palette</div>
                         </div>
                     </div>
@@ -196,4 +196,4 @@
 
 <!-- External JS -->
 <script src="{% static 'js/vectorize.js' %}"></script>
-{% endblock %}
+{% endblock %} 
