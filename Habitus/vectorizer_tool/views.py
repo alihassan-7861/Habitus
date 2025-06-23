@@ -8,9 +8,9 @@ import requests
 from django.http import HttpResponse
 
 # Create your views here.
-def vectorizer(request):
-    context={}
-    return render(request,'vectorizer_tool/vectorizer.html',context)
+# def vectorizer(request):
+#     context={}
+#     return render(request,'vectorizer_tool/vectorizer.html',context)
 
 def register(request):
     context={}
@@ -27,34 +27,10 @@ def myAccount(request):
     return render(request,'vectorizer_tool/myAccount.html',context)
 
 
-
-from django.shortcuts import render
-
 def vectorizer_form_view(request):
     return render(request, 'vectorizer_tool/vectorizer.html')
 
 
-
-
-# import os
-# import uuid
-# import requests
-# from django.conf import settings
-# from rest_framework.views import APIView
-# from rest_framework.parsers import MultiPartParser, FormParser
-# from rest_framework.response import Response
-# from rest_framework import status
-# from .serializers import VectorizerSerializer
-
-# import os
-# import uuid
-# import requests
-# from django.conf import settings
-# from rest_framework.views import APIView
-# from rest_framework.parsers import MultiPartParser, FormParser
-# from rest_framework.response import Response
-# from rest_framework import status
-# from .serializers import VectorizerSerializer
 
 # class VectorizerAPIView(APIView):
 #     parser_classes = [MultiPartParser, FormParser]

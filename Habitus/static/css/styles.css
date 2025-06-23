@@ -352,8 +352,8 @@
 
         .browse-btn {
             position: absolute;
-            top: 20px;
-            left: 20px;
+            top: 34px;
+            left: 35px;
             background: #2c3e50;
             color: white;
             border: none;
@@ -383,16 +383,69 @@
             text-align: center;
         }
 
-        /* Output Area */
-        .output-area {
-            padding: 20px;
-            min-height: 300px;
-           background: #f0f0f0;
-            border: 2px solid #ddd;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+       .uploaded-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    min-height: 240px;
+    position: relative;
+}
+
+.uploaded-wrapper img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+
+.uploaded-wrapper .browse-btn {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: #2c3e50;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+.uploaded-wrapper .browse-btn:hover {
+    background: #34495e;
+}
+
+
+
+ .output-area {
+    width: 100%;
+    min-height: 300px; /* provide minimum space, but allow growth */
+    background: #f0f0f0;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+.output-result {
+    text-align: center;
+}
+
+.output-result img {
+    max-width: 100%;
+    max-height: 100%;
+    height: auto;
+    width: auto;
+    display: block;
+    object-fit: contain;
+}
+
+
 
         .output-placeholder p {
             color: #666;
@@ -400,12 +453,28 @@
             text-align: center;
         }
 
-        .uploaded-image {
-            max-width: 100%;
-            max-height: 260px;
-            border-radius: 4px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
+   .download-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.download-link {
+    background-color: #1c1c1c;
+    color: white;
+    padding: 10px 25px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    text-align: center;
+    transition: background 0.3s ease;
+}
+
+.download-link:hover {
+    background-color: #333;
+}
+
 
 
         /* Tooltip */

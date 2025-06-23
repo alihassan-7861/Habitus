@@ -25,10 +25,10 @@
                     <div class="form-group">
                         <div class="label-with-tooltip">
                             <label for="width">Width (cm):</label>
-                            <button type="button" class="tooltip-btn" data-tooltip="Set the width of the output in centimeters">?</button>
+                            <button type="button" class="tooltip-btn" data-tooltip="Sets the width of the vector image in centimeters">?</button>
                         </div>
                         <div class="input-with-tooltip">
-                            <input type="number" id="width" name="width" step="0.01">
+                            <input type="number" id="width" name="width" step="0.01" min="0.01">
                         </div>
                     </div>
                 </div>
@@ -38,10 +38,10 @@
                     <div class="form-group">
                         <div class="label-with-tooltip">
                             <label for="height">Height (cm):</label>
-                            <button type="button" class="tooltip-btn" data-tooltip="Set the height of the output in centimeters">?</button>
+                            <button type="button" class="tooltip-btn" data-tooltip="Set the height of the vector image in centimeters">?</button>
                         </div>
                         <div class="input-with-tooltip">
-                            <input type="number" id="height" name="height" step="0.01">
+                            <input type="number" id="height" name="height" step="0.01" min="0.01">
                         </div>
                     </div>
                 </div>
@@ -99,7 +99,7 @@
                     <div class="form-group">
                         <div class="label-with-tooltip">
                             <label for="detail">Level of detail:</label>
-                            <button type="button" class="tooltip-btn" data-tooltip="Set the level of detail for vectorization">?</button>
+                            <button type="button" class="tooltip-btn" data-tooltip="Controls the details:Low values(0.01-0.1) result in detailed vectors, high values(1-10) simplify the shapes">?</button>
                         </div>
                         <div class="input-with-tooltip">
                             <input type="number" id="detail" name="level_of_details" step="0.01" min="0.01" max="10.0">
@@ -112,11 +112,11 @@
                     <div class="form-group">
                         <div class="label-with-tooltip">
                             <label for="smoothing">Smoothing:</label>
-                            <button type="button" class="tooltip-btn" data-tooltip="Select the smoothing level for the output">?</button>
+                            <button type="button" class="tooltip-btn" data-tooltip="Affects the anti-aliasing during PNG export.Anti-aliased for softer edges, Aliased for sharper edges.">?</button>
                         </div>
                         <div class="input-with-tooltip">
                             <select id="smoothing" name="smoothing">
-                                <option value="anti_aliased" selected>Un-aliased</option>
+                                <option value="anti_aliased" selected>Anti-aliased</option>
                                 <option value="aliased">Aliased</option>
                             </select>
                         </div>
@@ -128,10 +128,10 @@
                     <div class="form-group">
                         <div class="label-with-tooltip">
                             <label for="minArea">Minimum area (px):</label>
-                            <button type="button" class="tooltip-btn" data-tooltip="Set the minimum area in pixels">?</button>
+                            <button type="button" class="tooltip-btn" data-tooltip="Shapes smaller than this value are ignored. Higher values(60-100) reduce detail and file size.">?</button>
                         </div>
                         <div class="input-with-tooltip">
-                            <input type="number" id="minArea" name="minimum_area">
+                            <input type="number" id="minArea" name="minimum_area" min="45" step="1" >
                         </div>
                     </div>
                 </div>
@@ -141,10 +141,10 @@
                     <div class="form-group">
                         <div class="label-with-tooltip">
                             <label for="maxColors">Maximum colors:</label>
-                            <button type="button" class="tooltip-btn" data-tooltip="Maximum number of colors to use">?</button>
+                            <button type="button" class="tooltip-btn" data-tooltip="Maximum number of colors in the vectorized image. Affects detail and file size.">?</button>
                         </div>
                         <div class="input-with-tooltip">
-                            <input id="maxColors" type="number" name="maximum_colors"> <!-- ✅ Correct -->
+                            <input id="maxColors" type="number" name="maximum_colors" min="0" step="1"> <!-- ✅ Correct -->
                             <div class="help-text">Maximum 549 colors available in the malango® palette</div>
                         </div>
                     </div>
@@ -154,6 +154,10 @@
             <!-- Submit Button -->
             <div class="form-actions">
                 <button type="submit" class="vectorize-btn">Vectorize</button>
+            </div>
+             <div id="loadingSpinner" style="display:none; text-align:center; margin-top:20px;">
+                <img src="{% static 'images/spinner.png' %}" alt="Loading..." width="50" height="50">
+                <p style="color: #555; font-weight: 500;">Vectorization in Progress....Please wait.</p>
             </div>
         </form>
     </section>
@@ -182,13 +186,17 @@
                     </div>
                 </div>
             </div>
+            </section>
+
+<!-- Download Button (appended dynamically) -->
+<div id="downloadLinkContainer" style="text-align:center; margin-top: 20px;"></div>
+
         </div>
+
+
     </section>
 
-    <div id="loadingSpinner" style="display:none; text-align:center; margin-top:20px;">
-    <img src="{% static 'images/spinner.png' %}" alt="Loading..." width="50" height="50">
-    <p style="color: #555; font-weight: 500;">Processing...</p>
-</div>
+   
 </div>
 
 <!-- Tooltip -->

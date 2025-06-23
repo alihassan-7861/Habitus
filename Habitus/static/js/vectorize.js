@@ -447,6 +447,8 @@ class ImageUploadManager {
         this.fileInput = Utils.getEl('fileInput');
         this.outputArea = Utils.getEl('outputArea');
         this.uploadedFile = null;
+        this.imageOriginalWidth = 0;
+        this.imageOriginalHeight = 0;
         this.initEventListeners();
     }
     initEventListeners() {
@@ -478,24 +480,61 @@ class ImageUploadManager {
         this.displayUploadedImage(file);
         Utils.showNotification('Image uploaded successfully!', 'success');
     }
-    displayUploadedImage(file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            this.uploadArea.innerHTML = `<img src="${e.target.result}" alt="Uploaded image" class="uploaded-image">`;
-        };
-        reader.readAsDataURL(file);
-    }
-    showOutput(blob) {
-        const url = window.URL.createObjectURL(blob);
-        const ext = blob.type.includes('svg') ? 'svg' : 'png';
-        this.outputArea.innerHTML = `
-            <div style="text-align: center; padding: 20px;">
-                <p style="margin-bottom: 15px; color: #2ecc71;">✓ Vectorization Complete!</p>
-                <img src="${url}" class="svg-preview" style="max-height:400px;" />
-                <a href="${url}" download="vectorized_output.${ext}" style="display:block; margin-top:10px; color:#3498db;">Download Vector</a>
+   displayUploadedImage(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        this.uploadArea.innerHTML = `
+            <div class="uploaded-wrapper">
+                <img src="${e.target.result}" alt="Uploaded image" class="uploaded-image">
+                <button class="browse-btn">Choose Another Image</button>
             </div>
         `;
+        const newBrowseBtn = this.uploadArea.querySelector('.browse-btn');
+        newBrowseBtn.addEventListener('click', () => this.fileInput.click());
+    };
+    reader.readAsDataURL(file);
+}
+
+  showOutput(blob) {
+    const url = window.URL.createObjectURL(blob);
+    const ext = blob.type.includes('svg') ? 'svg' : 'png';
+
+    // Show image inside the output area
+    this.outputArea.innerHTML = `
+        <div class="output-result">
+            <p class="vector-success">✓ Vectorization Complete!</p>
+            <img src="${url}" alt="Vectorized Output" />
+        </div>
+    `;
+
+    // Remove old download wrapper if it exists
+    const existingWrapper = document.querySelector('.download-wrapper');
+    if (existingWrapper) {
+        existingWrapper.remove();
     }
+
+    // Create a centered wrapper div
+    const wrapper = document.createElement('div');
+    wrapper.className = 'download-wrapper';
+
+    // Create the download link
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `vectorized_output.${ext}`;
+    link.className = 'download-link';
+    link.textContent = 'Download result';
+
+    // Append link to wrapper
+    wrapper.appendChild(link);
+
+    // Append wrapper to the image section (outside of outputArea)
+    document.querySelector('.image-section').appendChild(wrapper);
+}
+
+
+
+
+
 }
 
 class FormValidator {
@@ -530,16 +569,52 @@ class VectorizerApp {
 
     initEventListeners() {
         this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+
+        const widthInput = Utils.getEl('width');
+        const heightInput = Utils.getEl('height');
+
+      let isSyncing = false;
+
+const syncWidthToHeight = () => {
+    if (isSyncing) return;
+    isSyncing = true;
+    const width = parseFloat(widthInput.value);
+    const ow = this.uploadManager.imageOriginalWidth || 1;
+    const oh = this.uploadManager.imageOriginalHeight || 1;
+
+    if (!isNaN(width) && width > 0) {
+        const h = Math.round((width * oh) / ow * 100) / 100; // Rounded to 2 decimals
+        heightInput.value = h;
+    }
+    isSyncing = false;
+};
+
+const syncHeightToWidth = () => {
+    if (isSyncing) return;
+    isSyncing = true;
+    const height = parseFloat(heightInput.value);
+    const ow = this.uploadManager.imageOriginalWidth || 1;
+    const oh = this.uploadManager.imageOriginalHeight || 1;
+
+    if (!isNaN(height) && height > 0) {
+        const w = Math.round((height * ow) / oh * 100) / 100; // Rounded to 2 decimals
+        widthInput.value = w;
+    }
+    isSyncing = false;
+};
+
+// Attach both input and change events
+['input', 'change'].forEach(evt => {
+    widthInput.addEventListener(evt, syncWidthToHeight);
+    heightInput.addEventListener(evt, syncHeightToWidth);
+});
+
+
+
     }
 
     initInputConstraints() {
-        const constraints = [
-            // { id: 'width', min: CONFIG.validation.minWidth, max: CONFIG.validation.maxWidth },
-            // { id: 'height', min: CONFIG.validation.minHeight, max: CONFIG.validation.maxHeight },
-            // { id: 'detail', min: CONFIG.validation.minDetail, max: CONFIG.validation.maxDetail, step: 0.01 },
-            // { id: 'minArea', min: CONFIG.validation.minArea, max: CONFIG.validation.maxArea },
-            // { id: 'maxColors', min: CONFIG.validation.minColors, max: CONFIG.validation.maxColors }
-        ];
+        const constraints = [];
         constraints.forEach(constraint => {
             const input = Utils.getEl(constraint.id);
             if (input) {
