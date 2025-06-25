@@ -390,13 +390,13 @@ const Utils = {
             transform: 'translateX(400px)',
             transition: 'transform 0.3s ease'
         });
-        const colors = {
-            info: '#3498db',
-            success: '#2ecc71',
-            warning: '#f39c12',
-            error: '#e74c3c'
-        };
-        notification.style.backgroundColor = colors[type] || colors.info;
+       const colors = {
+                info: getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#3498db',
+                success: getComputedStyle(document.documentElement).getPropertyValue('--success').trim() || '#2ecc71',
+                warning: getComputedStyle(document.documentElement).getPropertyValue('--warning').trim() || '#f39c12',
+                error: getComputedStyle(document.documentElement).getPropertyValue('--error').trim() || '#e74c3c'
+            };
+notification.style.backgroundColor = colors[type] || colors.info;
         document.body.appendChild(notification);
         setTimeout(() => { notification.style.transform = 'translateX(0)'; }, 100);
         setTimeout(() => {
@@ -604,10 +604,11 @@ const syncHeightToWidth = () => {
 };
 
 // Attach both input and change events
-['input', 'change'].forEach(evt => {
+['input', 'change', 'keyup', 'blur'].forEach(evt => {
     widthInput.addEventListener(evt, syncWidthToHeight);
     heightInput.addEventListener(evt, syncHeightToWidth);
 });
+
 
 
 
