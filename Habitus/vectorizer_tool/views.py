@@ -6,6 +6,7 @@ from rest_framework import status
 from .serializers import VectorizerSerializer
 import requests
 from django.http import HttpResponse
+import json  # ✅ Add this at the top of the file
 
 # Create your views here.
 # def vectorizer(request):
@@ -109,6 +110,7 @@ def vectorizer_form_view(request):
 
 
 
+import re
 
 
 
@@ -117,23 +119,29 @@ class VectorizeImageView(APIView):
         serializer = VectorizerSerializer(data=request.data)
         if serializer.is_valid():
             validated = serializer.validated_data
+            print("🧪 Output format received from validated data:", validated.get("output_format"))
 
-            # Load auth credentials
             api_id = os.environ.get("VECTORIZER_API_ID")
             api_key = os.environ.get("VECTORIZER_API_KEY")
 
             if not api_id or not api_key:
-                return Response(
-                    {"error": "Missing Vectorizer API credentials"},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                )
+                return Response({"error": "Missing Vectorizer API credentials"}, status=500)
 
             image = validated['image']
             files = {"image": image}
 
-            # Map local serializer fields to API fields
+            # ✅ Locked custom palette
+            HABITUS_PALETTE = [
+                "#FFFFFF", "#1A1A1A", "#DADADA", "#999999",
+                "#B7D79A", "#4C8C4A", "#2E472B", "#FDE74C",
+                "#F5C243", "#F28C28", "#C85A27", "#F88379",
+                "#D63E3E", "#8C1C13", "#AED9E0", "#4A90E2",
+                "#1B3B6F", "#3CCFCF", "#FBE3D4", "#D5A97B",
+                "#5C3B28", "#F5E0C3", "#A24B7B", "#FFCFD8"
+            ]
+
+            # Field mapping from validated serializer input
             API_FIELD_MAPPING = {
-                "maximum_colors": "processing.max_colors",
                 "minimum_area": "processing.shapes.min_area_px",
                 "output_format": "output.file_format",
                 "smoothing": "output.bitmap.anti_aliasing_mode",
@@ -142,32 +150,94 @@ class VectorizeImageView(APIView):
                 "height": "output.size.height",
             }
 
-            # Base payload
-            payload = {"mode": validated.get("mode", "test")}
+           # ✅ Build payload
+            payload = {
+                "mode": validated.get("mode", "production"),
+                "processing": {
+                    "palette": { "type": "custom", "colors": [  "#FFFFFF", "#1A1A1A", "#DADADA", "#999999",
+                            "#B7D79A", "#4C8C4A", "#2E472B", "#FDE74C",
+                            "#F5C243", "#F28C28", "#C85A27", "#F88379",
+                            "#D63E3E", "#8C1C13", "#AED9E0", "#4A90E2",
+                            "#1B3B6F", "#3CCFCF", "#FBE3D4", "#D5A97B",
+                            "#5C3B28", "#F5E0C3", "#A24B7B", "#FFCFD8" ] },
+                    "max_colors": 24
+                },
+                "output_format": "png",
+                "gap_filler": {
+                        "enabled": False
+                        }
+
+                }
+
+            
+
+
+            # ✅ Populate mapped fields into payload
+            def set_nested_key(obj, dotted_key, value):
+                keys = dotted_key.split('.')
+                for key in keys[:-1]:
+                    obj = obj.setdefault(key, {})
+                obj[keys[-1]] = value
 
             for local_field, api_field in API_FIELD_MAPPING.items():
                 if local_field in validated:
-                    payload[api_field] = validated[local_field]
+                    set_nested_key(payload, api_field, validated[local_field])
+                
+                
+            print("Mode:", validated.get("mode"))
+            print("Width:", validated.get("width"))
+            print("Height:", validated.get("height"))
+            print("Level of Detail:", validated.get("level_of_details"))
+            print("Minimum Area:", validated.get("minimum_area"))
+            print("Smoothing:", validated.get("smoothing"))
+
+            # ✅ Debug the final payload
+            print("Final payload:", json.dumps(payload, indent=2))
+            print("Expected format:", validated.get("output_format"))
 
             try:
                 response = requests.post(
                     "https://api.vectorizer.ai/api/v1/vectorize",
-                    data=payload,
+                    json=payload,
                     files=files,
                     auth=(api_id, api_key),
                     headers={"Accept": "application/json"}
                 )
+                print("🧪 First 200 bytes of response content:\n", response.content[:200])
 
                 if response.status_code == 200:
-                    content_type = response.headers.get("Content-Type", "application/octet-stream")
-                    file_extension = "svg" if content_type == "image/svg+xml" else "png"
-                    return HttpResponse(
+                   svg_text = response.content.decode('utf-8', errors='ignore')
+
+                   used_colors = set(re.findall(r'fill="(#(?:[0-9a-fA-F]{3}){1,2})"', svg_text))
+                   used_colors = {c.lower() for c in used_colors}
+
+                   habitus_palette = {
+                        "#ffffff", "#1a1a1a", "#dadada", "#999999",
+                        "#b7d79a", "#4c8c4a", "#2e472b", "#fde74c",
+                        "#f5c243", "#f28c28", "#c85a27", "#f88379",
+                        "#d63e3e", "#8c1c13", "#aed9e0", "#4a90e2",
+                        "#1b3b6f", "#3ccfcf", "#fbe3d4", "#d5a97b",
+                        "#5c3b28", "#f5e0c3", "#a24b7b", "#ffcfd8"
+                    }
+
+                   print("✅ Colors used in SVG:", used_colors)
+                   if used_colors.issubset(habitus_palette):
+                        print("✅ Verified: Only Habitus® palette colors used.")
+                   else:
+                        print("❌ Extra colors found:", used_colors - habitus_palette)
+                   output_format = validated.get("output_format", "svg")
+                  # Check if content is SVG based on content, not just header
+                   is_svg = response.content.lstrip().startswith(b"<?xml") or b"<svg" in response.content[:200]
+                   file_extension = "svg" if is_svg else "png"
+                   content_type = "image/svg+xml" if is_svg else "image/png"
+                   return HttpResponse(
                         response.content,
                         content_type=content_type,
                         headers={
                             "Content-Disposition": f'attachment; filename="vectorized_output.{file_extension}"'
                         }
                     )
+
                 else:
                     return Response(
                         {
@@ -185,4 +255,4 @@ class VectorizeImageView(APIView):
                 )
 
         else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.errors, status=400)

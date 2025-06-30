@@ -334,13 +334,11 @@
 
 const CONFIG = {
     tooltips: {
-        maxColors: 256,
         defaultValues: {
             width: 10,
             height: 10,
             detail: 0.5,
             minArea: 60,
-            maxColors: 36
         }
     },
     validation: {
@@ -352,8 +350,7 @@ const CONFIG = {
         maxDetail: 10.0,
         minArea: 0.0,
         maxArea: 100.0,
-        minColors: 0,
-        maxColors: 256
+       
     },
     allowedImageTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
 };
@@ -551,8 +548,6 @@ class FormValidator {
             errors.push(`Detail level must be between ${this.rules.minDetail} and ${this.rules.maxDetail}`);
         if (!Utils.validateNumber(data.minimum_area, this.rules.minArea, this.rules.maxArea))
             errors.push(`Minimum area must be between ${this.rules.minArea} and ${this.rules.maxArea}`);
-        if (!Utils.validateNumber(data.maximum_colors, this.rules.minColors, this.rules.maxColors))
-            errors.push(`Maximum colors must be between ${this.rules.minColors} and ${this.rules.maxColors}`);
         return errors;
     }
 }
@@ -567,52 +562,45 @@ class VectorizerApp {
         this.initInputConstraints();
     }
 
-    initEventListeners() {
-        this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+initEventListeners() {
+    this.form.addEventListener('submit', (e) => this.handleSubmit(e));
 
-        const widthInput = Utils.getEl('width');
-        const heightInput = Utils.getEl('height');
+    const widthInput = Utils.getEl('width');
+    const heightInput = Utils.getEl('height');
 
-      let isSyncing = false;
+    // Custom mapping
+    const pairMapping = {
+        "45": "30",
+        "60": "40",
+        "90": "60"
+    };
 
-const syncWidthToHeight = () => {
-    if (isSyncing) return;
-    isSyncing = true;
-    const width = parseFloat(widthInput.value);
-    const ow = this.uploadManager.imageOriginalWidth || 1;
-    const oh = this.uploadManager.imageOriginalHeight || 1;
+    let isSyncing = false;
 
-    if (!isNaN(width) && width > 0) {
-        const h = Math.round((width * oh) / ow * 100) / 100; // Rounded to 2 decimals
-        heightInput.value = h;
-    }
-    isSyncing = false;
-};
+    widthInput.addEventListener('change', () => {
+        if (isSyncing) return;
+        isSyncing = true;
+        const w = widthInput.value;
+        if (pairMapping[w]) {
+            heightInput.value = pairMapping[w];
+        }
+        isSyncing = false;
+    });
 
-const syncHeightToWidth = () => {
-    if (isSyncing) return;
-    isSyncing = true;
-    const height = parseFloat(heightInput.value);
-    const ow = this.uploadManager.imageOriginalWidth || 1;
-    const oh = this.uploadManager.imageOriginalHeight || 1;
-
-    if (!isNaN(height) && height > 0) {
-        const w = Math.round((height * ow) / oh * 100) / 100; // Rounded to 2 decimals
-        widthInput.value = w;
-    }
-    isSyncing = false;
-};
-
-// Attach both input and change events
-['input', 'change', 'keyup', 'blur'].forEach(evt => {
-    widthInput.addEventListener(evt, syncWidthToHeight);
-    heightInput.addEventListener(evt, syncHeightToWidth);
-});
+    heightInput.addEventListener('change', () => {
+        if (isSyncing) return;
+        isSyncing = true;
+        const h = heightInput.value;
+        const reverseMatch = Object.entries(pairMapping).find(([k, v]) => v === h);
+        if (reverseMatch) {
+            widthInput.value = reverseMatch[0];
+        }
+        isSyncing = false;
+    });
+}
 
 
 
-
-    }
 
     initInputConstraints() {
         const constraints = [];
@@ -639,10 +627,23 @@ const syncHeightToWidth = () => {
             return;
         }
 
-        const data = new FormData();
-        data.append('image', this.uploadManager.uploadedFile);
-        Object.entries(formData).forEach(([key, value]) => data.append(key, value));
+             const data = new FormData();
+                data.append('image', this.uploadManager.uploadedFile);
 
+                // Always manually get selected output format
+                const selectedFormat = document.querySelector('input[name="output_format"]:checked');
+                if (selectedFormat) {
+                    data.append('output_format', selectedFormat.value);
+                }
+
+                // Append all other form fields
+                Object.entries(formData).forEach(([key, value]) => {
+                    if (key !== 'maximum_colors' && key !== 'output_format') {
+                        data.append(key, value);
+                    }
+                });
+
+  
         Utils.showNotification('Submitting to server...', 'info');
         Utils.getEl('loadingSpinner').style.display = 'block';
 

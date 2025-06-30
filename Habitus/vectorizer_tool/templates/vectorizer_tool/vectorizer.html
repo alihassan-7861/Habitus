@@ -7,7 +7,8 @@
 <div class="container">
     <!-- Vectorizer Header -->
     <header class="header">
-        <h2 class="title">Habitus® – Vectorizer AI <hr></h2>
+            
+        <img src="{% static 'images/habitus_logo.png' %}" alt="Habitus Logo" class="logo" />
         <div class="description">
             <div class="indicator"></div>
             <span>Uses the Habitus® color palette with 16 colors for vectorization.</span>
@@ -21,30 +22,42 @@
         <form class="parameters-form" id="parametersForm">
             <div class="parameters-grid">
                 <!-- Width -->
-                <div class="settings-box">
-                    <div class="form-group">
-                        <div class="label-with-tooltip">
-                            <label for="width">Width (cm):</label>
-                            <button type="button" class="tooltip-btn" data-tooltip="Sets the width of the vector image in centimeters">?</button>
-                        </div>
-                        <div class="input-with-tooltip">
-                            <input type="number" id="width" name="width" step="0.01" min="0.01">
-                        </div>
-                    </div>
-                </div>
+               <!-- Width Dropdown -->
+<div class="settings-box">
+    <div class="form-group">
+        <div class="label-with-tooltip">
+            <label for="width">Width (cm):</label>
+            <button type="button" class="tooltip-btn" data-tooltip="Sets the width of the vector image in centimeters">?</button>
+        </div>
+        <div class="input-with-tooltip">
+            <select id="width" name="width">
+                <option value="45" selected>45</option>
+                <option value="60">60</option>
+                <option value="90">90</option>
+            </select>
 
-                <!-- Height -->
-                <div class="settings-box">
-                    <div class="form-group">
-                        <div class="label-with-tooltip">
-                            <label for="height">Height (cm):</label>
-                            <button type="button" class="tooltip-btn" data-tooltip="Set the height of the vector image in centimeters">?</button>
-                        </div>
-                        <div class="input-with-tooltip">
-                            <input type="number" id="height" name="height" step="0.01" min="0.01">
-                        </div>
-                    </div>
-                </div>
+        </div>
+    </div>
+</div>
+
+<!-- Height Dropdown -->
+<div class="settings-box">
+    <div class="form-group">
+        <div class="label-with-tooltip">
+            <label for="height">Height (cm):</label>
+            <button type="button" class="tooltip-btn" data-tooltip="Set the height of the vector image in centimeters">?</button>
+        </div>
+        <div class="input-with-tooltip">
+            <select id="height" name="height">
+                <option value="30" selected>30</option>
+                <option value="40">40</option>
+                <option value="60">60</option>
+            </select>
+
+        </div>
+    </div>
+</div>
+
 
                 <!-- Mode -->
                 <div class="settings-box">
@@ -56,7 +69,7 @@
                         <div class="input-with-tooltip">
                             <div class="radio-group">
                                 <label class="radio-label">
-                                    <input type="radio" name="mode" value="test" checked>
+                                    <input type="radio" name="mode" value="test">
                                     <span class="radio-custom"></span> Test
                                 </label>
                                 <label class="radio-label">
@@ -64,7 +77,7 @@
                                     <span class="radio-custom"></span> Preview
                                 </label>
                                 <label class="radio-label">
-                                    <input type="radio" name="mode" value="production">
+                                    <input type="radio" name="mode" value="production" checked>
                                     <span class="radio-custom"></span> Production
                                 </label>
                             </div>
@@ -82,11 +95,11 @@
                         <div class="input-with-tooltip">
                             <div class="radio-group">
                                 <label class="radio-label">
-                                    <input type="radio" name="output_format" value="png" checked>
+                                    <input type="radio" name="output_format" value="png">
                                     <span class="radio-custom"></span> PNG
                                 </label>
                                 <label class="radio-label">
-                                    <input type="radio" name="output_format" value="svg">
+                                    <input type="radio" name="output_format" value="svg" checked>
                                     <span class="radio-custom"></span> SVG
                                 </label>
                             </div>
@@ -102,7 +115,7 @@
                             <button type="button" class="tooltip-btn" data-tooltip="Controls the details:Low values(0.01-0.1) result in detailed vectors, high values(1-10) simplify the shapes">?</button>
                         </div>
                         <div class="input-with-tooltip">
-                            <input type="number" id="detail" name="level_of_details" step="0.01" min="0.01" max="10.0">
+                            <input type="number" id="detail" name="level_of_details" step="0.01" min="0.01" max="10.0" value="0.1">
                         </div>
                     </div>
                 </div>
@@ -131,24 +144,24 @@
                             <button type="button" class="tooltip-btn" data-tooltip="Shapes smaller than this value are ignored. Higher values(60-100) reduce detail and file size.">?</button>
                         </div>
                         <div class="input-with-tooltip">
-                            <input type="number" id="minArea" name="minimum_area" min="45" step="1" >
+                            <input type="number" id="minArea" name="minimum_area" min="45" step="1"  value="45">
                         </div>
                     </div>
                 </div>
 
                 <!-- Maximum Colors -->
-                <div class="settings-box">
+                <!-- <div class="settings-box">
                     <div class="form-group">
                         <div class="label-with-tooltip">
                             <label for="maxColors">Maximum colors:</label>
                             <button type="button" class="tooltip-btn" data-tooltip="Maximum number of colors in the vectorized image. Affects detail and file size.">?</button>
                         </div>
                         <div class="input-with-tooltip">
-                            <input id="maxColors" type="number" name="maximum_colors" min="0" step="1"> <!-- ✅ Correct -->
+                                <input type="number" name="maximum_colors" id="maximum_colors" value="24" hidden disabled>
                             <div class="help-text">Maximum 16 colors available in the habitus® palette</div>
                         </div>
                     </div>
-                </div>
+                </div> -->
             </div>
 
             <!-- Submit Button -->
