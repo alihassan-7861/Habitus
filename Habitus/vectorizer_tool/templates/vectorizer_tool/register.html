@@ -2,4 +2,15 @@
 {% block content%}
 <h2 class="title">Register page</h2>
 <p>Welcome to the registration page! Here you can create a new account to access the Vectorizer Tool and other features.</p>
+
+<!-- templates/vectorizer_form.html -->
+<!-- <form action="/vectorizer-color/upload/" method="POST" enctype="multipart/form-data">
+  {% csrf_token %}
+  <input type="file" name="image" required />
+  <select name="format">
+    <option value="svg">SVG</option>
+    <option value="png">PNG</option>
+  </select>
+  <button type="submit">Upload and Vectorize</button>
+</form> -->
 {% endblock content %}

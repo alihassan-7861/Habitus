@@ -2,8 +2,8 @@ from rest_framework import serializers
 
 class VectorizerSerializer(serializers.Serializer):
     image = serializers.ImageField(required=True)
-    width = serializers.FloatField(min_value=0.0, max_value=1.0E12, required=False)
-    height = serializers.FloatField(min_value=0.0, max_value=1.0E12, required=False)
+    # width = serializers.FloatField(min_value=0.0, max_value=1.0E12, required=False)
+    # height = serializers.FloatField(min_value=0.0, max_value=1.0E12, required=False)
     mode = serializers.ChoiceField(
         choices=[
             ("test", "test"),

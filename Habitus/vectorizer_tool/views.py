@@ -6,11 +6,9 @@ from rest_framework import status
 from .serializers import VectorizerSerializer
 import requests
 from django.http import HttpResponse
+import json 
+import re
 
-# Create your views here.
-# def vectorizer(request):
-#     context={}
-#     return render(request,'vectorizer_tool/vectorizer.html',context)
 
 def register(request):
     context={}
@@ -31,136 +29,98 @@ def vectorizer_form_view(request):
     return render(request, 'vectorizer_tool/vectorizer.html')
 
 
-
-# class VectorizerAPIView(APIView):
-#     parser_classes = [MultiPartParser, FormParser]
-
-#     def post(self, request):
-#         serializer = VectorizerSerializer(data=request.data)
-#         if not serializer.is_valid():
-#             return Response(serializer.errors, status=400)
-
-#         data = serializer.validated_data
-#         image = data.pop('image')
-#         output_format = data.get('output_format', 'svg')
-
-#         extension = 'png' if output_format == 'png' else 'svg'
-#         filename = f'vector_output_{uuid.uuid4().hex}.{extension}'
-#         relative_path = f'vectorized/{filename}'
-#         full_path = os.path.join(settings.MEDIA_ROOT, relative_path)
-#         os.makedirs(os.path.dirname(full_path), exist_ok=True)
-
-#         api_id = os.environ.get("VECTORIZER_API_ID")
-#         api_key = os.environ.get("VECTORIZER_API_KEY")
-
-#         # ✅ Map your flat fields to what the API expects
-#         payload = {
-#                 "mode": data["mode"],
-#                 "output.size.width": data["width"],
-#                 "output.size.height": data["height"],
-#                 "processing.max_colors": data["maximum_colors"],
-#                 "processing.shapes.min_area_px": data["minimum_area"],
-#                 "output.file_format": output_format,
-#                 "output.bitmap.anti_aliasing_mode": data["smoothing"]
-#             }
-#         try:
-#             response = requests.post(
-#                 "https://api.vectorizer.ai/api/v1/vectorize",
-#                 data=payload,
-#                 files={"image": image},
-#                 auth=(api_id, api_key),
-#                 headers={"accept": "application/json"}
-#             )
-
-#             if response.status_code != 200:
-#                 return Response({
-#                     "error": "Vectorizer API failed",
-#                     "status_code": response.status_code,
-#                     "api_message": response.text[:300]
-#                 }, status=response.status_code)
-
-#             content_type = response.headers.get("Content-Type", "")
-
-#             # ✅ Ensure valid image returned
-#             if output_format == "png" and "image/png" in content_type:
-#                 with open(full_path, 'wb') as f:
-#                     f.write(response.content)
-
-#             elif output_format == "svg" and "image/svg+xml" in content_type:
-#                 with open(full_path, 'w', encoding='utf-8') as f:
-#                     f.write(response.text)
-
-#             else:
-#                 return Response({
-#                     "error": "Invalid image returned from API",
-#                     "status_code": response.status_code,
-#                     "content_type": content_type,
-#                     "api_message_preview": response.text[:300]
-#                 }, status=400)
-
-#             return Response({
-#                 "message": f"{extension.upper()} saved successfully",
-#                 "file_path": relative_path,
-#                 "media_url": request.build_absolute_uri(f"/images/{relative_path}")
-#             }, status=200)
-
-#         except Exception as e:
-#             return Response({"error": str(e)}, status=500)
-
-
-
-
-
-
 class VectorizeImageView(APIView):
     def post(self, request):
         serializer = VectorizerSerializer(data=request.data)
         if serializer.is_valid():
             validated = serializer.validated_data
 
-            # Load auth credentials
             api_id = os.environ.get("VECTORIZER_API_ID")
             api_key = os.environ.get("VECTORIZER_API_KEY")
 
             if not api_id or not api_key:
-                return Response(
-                    {"error": "Missing Vectorizer API credentials"},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                )
+                return Response({"error": "Missing Vectorizer API credentials"}, status=500)
 
             image = validated['image']
             files = {"image": image}
 
-            # Map local serializer fields to API fields
+            HABITUS_PALETTE = [
+                "#FFFFFF", "#1A1A1A", "#DADADA", "#999999",
+                "#B7D79A", "#4C8C4A", "#2E472B", "#FDE74C",
+                "#F5C243", "#F28C28", "#C85A27", "#F88379",
+                "#D63E3E", "#8C1C13", "#AED9E0", "#4A90E2",
+                "#1B3B6F", "#3CCFCF", "#FBE3D4", "#D5A97B",
+                "#5C3B28", "#F5E0C3", "#A24B7B", "#FFCFD8"
+            ]
+            palette_string = ";".join(HABITUS_PALETTE)  
+
             API_FIELD_MAPPING = {
-                "maximum_colors": "processing.max_colors",
                 "minimum_area": "processing.shapes.min_area_px",
                 "output_format": "output.file_format",
                 "smoothing": "output.bitmap.anti_aliasing_mode",
                 "level_of_details": "output.curves.line_fit_tolerance",
-                "width": "output.size.width",
-                "height": "output.size.height",
+                # "width": "output.size.width",
+                # "height": "output.size.height",
+                "mode": "mode"
             }
 
-            # Base payload
-            payload = {"mode": validated.get("mode", "test")}
+            payload = {
+               
+                
+
+            }
+
+
+            def set_nested_key(obj, dotted_key, value):
+                keys = dotted_key.split('.')
+                for key in keys[:-1]:
+                    obj = obj.setdefault(key, {})
+                obj[keys[-1]] = value
 
             for local_field, api_field in API_FIELD_MAPPING.items():
                 if local_field in validated:
-                    payload[api_field] = validated[local_field]
+                    set_nested_key(payload, api_field, validated[local_field])
+
+
+                form_data = {
+                    "json": json.dumps(payload),
+                    "processing.palette": palette_string  # ✅ passed separately
+                }
+            # ✅ Enable bitmap output for PNG
+            if validated.get("output_format") == "png":
+                set_nested_key(payload, "output.bitmap.enabled", True)
+                set_nested_key(payload, "output.bitmap.resolution_dpi", 300)
+
+            # ✅ Debug final payload
+            print("📦 Final payload:", json.dumps(payload, indent=2))
 
             try:
                 response = requests.post(
                     "https://api.vectorizer.ai/api/v1/vectorize",
-                    data=payload,
-                    files=files,
+                    data=form_data, 
+                    files={"image": image},             
                     auth=(api_id, api_key),
-                    headers={"Accept": "application/json"}
+                   
                 )
 
+                print("🧪 Response status code:", response.status_code)
+
                 if response.status_code == 200:
-                    content_type = response.headers.get("Content-Type", "application/octet-stream")
-                    file_extension = "svg" if content_type == "image/svg+xml" else "png"
+                    output_format = validated.get("output_format", "svg").lower()
+                    content_type = "image/svg+xml" if output_format == "svg" else "image/png"
+                    file_extension = output_format
+
+                    # Debug image analysis (optional)
+                    if output_format == "svg":
+                        svg_text = response.content.decode('utf-8', errors='ignore')
+                        used_colors = set(re.findall(r'fill="(#(?:[0-9a-fA-F]{3}){1,2})"', svg_text))
+                        used_colors = {c.lower() for c in used_colors}
+                        habitus_palette = {c.lower() for c in HABITUS_PALETTE}
+                        if used_colors.issubset(habitus_palette):
+                            print("✅ Verified: Only Habitus® palette colors used.")
+                        else:
+                            print("❌ Extra colors found:", used_colors - habitus_palette)
+
                     return HttpResponse(
                         response.content,
                         content_type=content_type,
@@ -168,21 +128,94 @@ class VectorizeImageView(APIView):
                             "Content-Disposition": f'attachment; filename="vectorized_output.{file_extension}"'
                         }
                     )
+
                 else:
-                    return Response(
-                        {
-                            "error": "Vectorizer API returned an error",
-                            "status_code": response.status_code,
-                            "details": response.text
-                        },
-                        status=response.status_code
-                    )
+                    return Response({
+                        "error": "Vectorizer API returned an error",
+                        "status_code": response.status_code,
+                        "details": response.text
+                    }, status=response.status_code)
 
             except requests.exceptions.RequestException as e:
-                return Response(
-                    {"error": "Request to Vectorizer API failed", "details": str(e)},
-                    status=500
-                )
+                return Response({
+                    "error": "Request to Vectorizer API failed",
+                    "details": str(e)
+                }, status=500)
 
         else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.errors, status=400)
+
+
+
+
+
+# import os
+# import requests
+# from django.conf import settings
+# from django.http import FileResponse, JsonResponse
+# from django.views.decorators.csrf import csrf_exempt
+# from django.views.decorators.http import require_POST
+# from django.core.files.storage import default_storage
+
+
+# @csrf_exempt
+# @require_POST
+# def vectorize_image(request):
+#     # Get file and format
+#     image_file = request.FILES.get("image")
+#     output_format = request.POST.get("format", "svg")
+
+#     if not image_file:
+#         return JsonResponse({"error": "Image file is required."}, status=400)
+
+#     # Save image temporarily
+#     image_path = default_storage.save(image_file.name, image_file)
+#     full_path = os.path.join(settings.MEDIA_ROOT, image_path)
+
+#     # Custom color palette (24 colors)
+#     custom_palette = [
+#         "#FFFFFF", "#1A1A1A", "#DADADA", "#999999",
+#         "#B7D79A", "#4C8C4A", "#2E472B", "#FDE74C",
+#         "#F5C243", "#F28C28", "#C85A27", "#F88379",
+#         "#D63E3E", "#8C1C13", "#AED9E0", "#4A90E2",
+#         "#1B3B6F", "#3CCFCF", "#FBE3D4", "#D5A97B",
+#         "#5C3B28", "#F5E0C3", "#A24B7B", "#FFCFD8"
+#     ]
+
+#     # Form data as list of tuples
+#     form_data = [
+#         ("mode", "production"),
+#         ("processing.shapes.min_area_px", "45"),
+#         ("output.file_format", output_format),
+#         ("output.bitmap.anti_aliasing_mode", "aliased"),
+#         ("output.curves.line_fit_tolerance", "0.1"),
+#         ("output.size.width", "45"),
+#         ("output.size.height", "30"),
+#         ("processing.palette", ";".join(custom_palette)),  # ✅ Correct single field
+#     ]
+
+#     # Send request to Vectorizer API
+#     with open(full_path, "rb") as f:
+#         files = {"image": f}
+#         response = requests.post(
+#             "https://vectorizer.ai/api/v1/vectorize",
+#             data=form_data,
+#             files=files,
+#             auth=("vkqi8vk8s2ks85b", "74vgc7l4527jrha395en131ifuvmbp31iem60vh81pvf76i4b6sn")  # 🔐 Replace with your credentials
+#         )
+
+#     # Clean up uploaded image
+#     default_storage.delete(image_path)
+
+#     if response.status_code == 200:
+#         # Save the result image (svg or png)
+#         output_filename = f"vectorized.{output_format}"
+#         output_path = os.path.join(settings.MEDIA_ROOT, output_filename)
+
+#         with open(output_path, "wb") as f:
+#             f.write(response.content)
+
+#         return FileResponse(open(output_path, "rb"), as_attachment=True, filename=output_filename)
+
+#     # Return error response
+#     return JsonResponse({"error": response.text}, status=response.status_code)
