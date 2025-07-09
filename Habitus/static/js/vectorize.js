@@ -13,9 +13,9 @@ const CONFIG = {
         maxWidth: 1.0e12,
         minHeight: 0.0,
         maxHeight: 1.0e12,
-        minDetail: 0.01,
-        maxDetail: 10.0,
-        minArea: 0.0,
+        minDetail: 0.001,
+        maxDetail: 1.0,
+        minArea: 45.0,
         maxArea: 100.0,
        
     },

@@ -1,16 +1,313 @@
-{%  extends 'vectorizer_tool/main.html' %}
-{% block content%}
-<h2 class="title">Register page</h2>
-<p>Welcome to the registration page! Here you can create a new account to access the Vectorizer Tool and other features.</p>
+{% extends 'vectorizer_tool/main.html' %}
+{% load static %}
 
-<!-- templates/vectorizer_form.html -->
-<!-- <form action="/vectorizer-color/upload/" method="POST" enctype="multipart/form-data">
-  {% csrf_token %}
-  <input type="file" name="image" required />
-  <select name="format">
-    <option value="svg">SVG</option>
-    <option value="png">PNG</option>
-  </select>
-  <button type="submit">Upload and Vectorize</button>
-</form> -->
+{% block content %}
+<style>
+    :root {
+        --accent: #ff503c;
+        --text-dark: #3c231e;
+        --text-light: #ffffff;
+    }
+
+    .download-dialog {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        color: var(--text-dark);
+        padding: 25px 35px;
+        border-radius: 12px;
+        box-shadow: 0 20px 40px rgba(60, 35, 30, 0.1);
+        z-index: 9999;
+    }
+
+    .download-dialog.hidden {
+        display: none;
+    }
+
+    .download-dialog h3 {
+        margin-bottom: 15px;
+        font-size: 18px;
+    }
+
+    .download-dialog label {
+        display: block;
+        margin-bottom: 10px;
+        font-size: 15px;
+    }
+
+    .download-dialog button {
+        background: var(--accent);
+        color: var(--text-light);
+        border: none;
+        padding: 10px 20px;
+        border-radius: 20px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .download-dialog button:hover {
+        background: #e6452c;
+        transform: scale(1.05);
+    }
+
+    .download-section {
+        text-align: center;
+        margin-top: 30px;
+    }
+
+    .download-btn {
+        background: var(--accent);
+        color: white;
+        padding: 15px 30px;
+        border-radius: 25px;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .download-btn::before {
+        content: '⬇️';
+        font-size: 1.2rem;
+        transition: transform 0.3s ease;
+    }
+
+    .download-btn::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #38ef7d 0%, #11998e 100%);
+        transition: left 0.4s ease;
+        z-index: -1;
+    }
+
+    .download-btn:hover::after {
+        left: 0;
+    }
+
+    .download-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(17, 153, 142, 0.4);
+    }
+
+    .download-btn:hover::before {
+        transform: scale(1.2) rotate(10deg);
+    }
+</style>
+
+<div class="container">
+    <div class="header">
+        <h1 class="page-title">Paint-by-Number PDF Generator</h1>
+        <div class="description">
+            <div class="indicator"></div>
+            Select an image (must use the 24-color palette) to generate your paint-by-number file.
+        </div>
+    </div>
+
+    <div class="color-palette-section">
+        <div class="compact-grid" id="compactGrid"></div>
+    </div>
+
+    <div class="image-section">
+        <div class="image-container">
+            <div class="image-panel">
+                <div class="panel-title">Original Image</div>
+                <div class="upload-area">
+                    <div class="upload-placeholder" id="uploadPlaceholder">
+                        <div class="upload-text">Upload Image</div>
+                        <div class="upload-subtext">Click to browse or drag and drop</div>
+                        <button class="browse-btn" type="button" onclick="triggerImageInput()">Choose File</button>
+                        <p>Supports: JPG, PNG, GIF<br>Max size: 10MB</p>
+                    </div>
+                    <div class="uploaded-wrapper hidden" id="uploadedWrapper">
+                        <img id="uploadedImage" src="" alt="Uploaded image">
+                        <button class="browse-btn" type="button" onclick="triggerImageInput()">Change Image</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="image-panel">
+                <div class="panel-title">Generated Output</div>
+                <div class="output-area">
+                    <div class="output-placeholder" id="outputPlaceholder">
+                        <p>Your paint-by-number file will appear here</p>
+                    </div>
+                    <div class="hidden" id="outputResult">
+                        <p>File generated successfully click download button to download!</p>
+                        <img id="outputPreview" src="" alt="Generated output" style="max-width: 100%; margin-top: 10px;" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="loadingSpinner" class="hidden" style="text-align: center; margin-top: 20px;">
+        <img src="{% static 'images/spinner.png' %}" alt="Loading..." width="50" height="50">
+    </div>
+
+    <div style="text-align: center; margin-top: 30px;">
+        <button class="generate-btn" id="generateBtn" onclick="showDownloadDialog()" disabled>Generate</button>
+    </div>
+
+    <input type="file" id="imageInput" class="file-input" accept="image/*" onchange="handleFileSelect(event)" style="display: none;" />
+
+    <div id="downloadDialog" class="download-dialog hidden">
+        <h3>Choose File Format</h3>
+        <label><input type="radio" name="format" value="pdf" checked> PDF</label><br>
+        <label><input type="radio" name="format" value="jpeg"> JPEG</label><br><br>
+        <button onclick="uploadImage()">Download</button>
+    </div>
+
+    <div class="download-section hidden" id="finalDownloadButtonWrapper">
+        <a href="#" id="finalDownloadBtn" class="download-btn" download>Download File</a>
+    </div>
+</div>
+
+<script>
+    const colorPalette = [
+        { hex: "#FFFFFF", name: "White" }, { hex: "#1A1A1A", name: "Black" },
+        { hex: "#DADADA", name: "Light Gray" }, { hex: "#999999", name: "Medium Gray" },
+        { hex: "#B7D79A", name: "Light Green" }, { hex: "#4C8C4A", name: "Medium Green" },
+        { hex: "#2E472B", name: "Dark Green" }, { hex: "#FDE74C", name: "Bright Yellow" },
+        { hex: "#F5C243", name: "Golden Yellow" }, { hex: "#F28C28", name: "Orange" },
+        { hex: "#C85A27", name: "Dark Orange" }, { hex: "#F88379", name: "Light Red" },
+        { hex: "#D63E3E", name: "Medium Red" }, { hex: "#8C1C13", name: "Dark Red" },
+        { hex: "#AED9E0", name: "Light Blue" }, { hex: "#4A90E2", name: "Medium Blue" },
+        { hex: "#1B3B6F", name: "Dark Blue" }, { hex: "#3CCFCF", name: "Cyan" },
+        { hex: "#FBE3D4", name: "Light Peach" }, { hex: "#D5A97B", name: "Beige" },
+        { hex: "#5C3B28", name: "Brown" }, { hex: "#F5E0C3", name: "Cream" },
+        { hex: "#A24B7B", name: "Purple" }, { hex: "#FFCFD8", name: "Light Pink" }
+    ];
+
+    function generateLabel(index) {
+        const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        return `${letters[Math.floor(index / 10)]}${index % 10}`;
+    }
+
+    function getContrastColor(hex) {
+        const r = parseInt(hex.substr(1, 2), 16);
+        const g = parseInt(hex.substr(3, 2), 16);
+        const b = parseInt(hex.substr(5, 2), 16);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        return brightness > 128 ? '#000' : '#fff';
+    }
+
+    function createCompactGrid() {
+        const grid = document.getElementById('compactGrid');
+        colorPalette.forEach((color, index) => {
+            const label = generateLabel(index);
+            const dot = document.createElement('div');
+            dot.className = 'color-dot';
+            dot.style.backgroundColor = color.hex;
+            dot.style.color = getContrastColor(color.hex);
+            dot.innerHTML = `
+                ${label}
+                <div class="tooltip">
+                    <strong>${color.name}</strong><br>
+                    ${color.hex}<br>
+                    Label: ${label}
+                </div>`;
+            grid.appendChild(dot);
+        });
+    }
+
+    function handleFileSelect(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('uploadedImage').src = e.target.result;
+            document.getElementById('uploadPlaceholder').classList.add('hidden');
+            document.getElementById('uploadedWrapper').classList.remove('hidden');
+            document.getElementById('generateBtn').disabled = false;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function triggerImageInput() {
+        const input = document.getElementById('imageInput');
+        input.value = ''; // Reset the input to allow same file re-selection
+        input.click();
+    }
+
+    function showDownloadDialog() {
+        document.getElementById('downloadDialog').classList.remove('hidden');
+    }
+
+    function uploadImage() {
+        const file = document.getElementById('imageInput').files[0];
+        const format = document.querySelector('input[name="format"]:checked').value;
+        if (!file) {
+            alert("Please select a file.");
+            return;
+        }
+
+        document.getElementById('downloadDialog').classList.add('hidden');
+        document.getElementById('loadingSpinner').classList.remove('hidden');
+        document.getElementById('generateBtn').disabled = true;
+
+        const formData = new FormData();
+        formData.append('image', file);
+        formData.append('format', format);
+
+        fetch('/generate-pbn/', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) throw new Error("Generation failed.");
+            return response.blob();
+        })
+        .then(blob => {
+            const url = URL.createObjectURL(blob);
+            const outputPreview = document.getElementById('outputPreview');
+            outputPreview.src = url;
+            document.getElementById('outputPlaceholder').classList.add('hidden');
+            document.getElementById('outputResult').classList.remove('hidden');
+
+            const finalDownloadBtn = document.getElementById('finalDownloadBtn');
+            finalDownloadBtn.href = url;
+            finalDownloadBtn.download = format === 'pdf' ? 'habitus.pdf' : 'habitus.jpeg';
+
+            document.getElementById('finalDownloadButtonWrapper').classList.remove('hidden');
+        })
+        .catch(err => alert("Error: " + err.message))
+        .finally(() => {
+            document.getElementById('loadingSpinner').classList.add('hidden');
+            document.getElementById('generateBtn').disabled = false;
+        });
+    }
+
+    // Drag-and-drop
+    const uploadArea = document.querySelector('.upload-area');
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault(); uploadArea.classList.add('dragover');
+    });
+    uploadArea.addEventListener('dragleave', (e) => {
+        e.preventDefault(); uploadArea.classList.remove('dragover');
+    });
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault(); uploadArea.classList.remove('dragover');
+        const files = e.dataTransfer.files;
+        if (files.length > 0 && files[0].type.startsWith('image/')) {
+            document.getElementById('imageInput').files = files;
+            handleFileSelect({ target: { files: files } });
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', createCompactGrid);
+</script>
 {% endblock content %}

@@ -8,21 +8,13 @@ import requests
 from django.http import HttpResponse
 import json 
 import re
-
+from rest_framework.parsers import MultiPartParser
+from .utils import process_image_to_pbn_pdf
+from django.http import FileResponse
 
 def register(request):
     context={}
     return render(request,'vectorizer_tool/register.html',context)
-
-
-def instruction(request):
-    context={}
-    return render(request,'vectorizer_tool/instruction.html',context)
-
-
-def myAccount(request):
-    context={}
-    return render(request,'vectorizer_tool/myAccount.html',context)
 
 
 def vectorizer_form_view(request):
@@ -65,9 +57,7 @@ class VectorizeImageView(APIView):
             }
 
             payload = {
-               
                 
-
             }
 
 
@@ -147,75 +137,41 @@ class VectorizeImageView(APIView):
 
 
 
+def test_pbn_frontend(request):
+    return render(request, "vectorizer_tool/register.html")
 
 
-# import os
-# import requests
-# from django.conf import settings
-# from django.http import FileResponse, JsonResponse
-# from django.views.decorators.csrf import csrf_exempt
-# from django.views.decorators.http import require_POST
-# from django.core.files.storage import default_storage
 
 
-# @csrf_exempt
-# @require_POST
-# def vectorize_image(request):
-#     # Get file and format
-#     image_file = request.FILES.get("image")
-#     output_format = request.POST.get("format", "svg")
+class PaintByNumberView(APIView):
+    parser_classes = [MultiPartParser]
 
-#     if not image_file:
-#         return JsonResponse({"error": "Image file is required."}, status=400)
+    def post(self, request):
+        image_file = request.FILES.get("image")
+        selected_format = request.POST.get("format", "pdf").lower()
 
-#     # Save image temporarily
-#     image_path = default_storage.save(image_file.name, image_file)
-#     full_path = os.path.join(settings.MEDIA_ROOT, image_path)
+        if not image_file:
+            return Response({"error": "No image uploaded."}, status=400)
 
-#     # Custom color palette (24 colors)
-#     custom_palette = [
-#         "#FFFFFF", "#1A1A1A", "#DADADA", "#999999",
-#         "#B7D79A", "#4C8C4A", "#2E472B", "#FDE74C",
-#         "#F5C243", "#F28C28", "#C85A27", "#F88379",
-#         "#D63E3E", "#8C1C13", "#AED9E0", "#4A90E2",
-#         "#1B3B6F", "#3CCFCF", "#FBE3D4", "#D5A97B",
-#         "#5C3B28", "#F5E0C3", "#A24B7B", "#FFCFD8"
-#     ]
+        try:
+            pdf_path, jpeg_path = process_image_to_pbn_pdf(image_file)
 
-#     # Form data as list of tuples
-#     form_data = [
-#         ("mode", "production"),
-#         ("processing.shapes.min_area_px", "45"),
-#         ("output.file_format", output_format),
-#         ("output.bitmap.anti_aliasing_mode", "aliased"),
-#         ("output.curves.line_fit_tolerance", "0.1"),
-#         ("output.size.width", "45"),
-#         ("output.size.height", "30"),
-#         ("processing.palette", ";".join(custom_palette)),  # ✅ Correct single field
-#     ]
+            if selected_format == "jpeg":
+                return FileResponse(
+                    open(jpeg_path, 'rb'),
+                    as_attachment=True,
+                    filename='habitus.jpeg',
+                    content_type='image/jpeg'
+                )
+            else:  # default to PDF
+                return FileResponse(
+                    open(pdf_path, 'rb'),
+                    as_attachment=True,
+                    filename='habitus.pdf',
+                    content_type='application/pdf'
+                )
 
-#     # Send request to Vectorizer API
-#     with open(full_path, "rb") as f:
-#         files = {"image": f}
-#         response = requests.post(
-#             "https://vectorizer.ai/api/v1/vectorize",
-#             data=form_data,
-#             files=files,
-#             auth=("vkqi8vk8s2ks85b", "74vgc7l4527jrha395en131ifuvmbp31iem60vh81pvf76i4b6sn")  # 🔐 Replace with your credentials
-#         )
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
 
-#     # Clean up uploaded image
-#     default_storage.delete(image_path)
 
-#     if response.status_code == 200:
-#         # Save the result image (svg or png)
-#         output_filename = f"vectorized.{output_format}"
-#         output_path = os.path.join(settings.MEDIA_ROOT, output_filename)
-
-#         with open(output_path, "wb") as f:
-#             f.write(response.content)
-
-#         return FileResponse(open(output_path, "rb"), as_attachment=True, filename=output_filename)
-
-#     # Return error response
-#     return JsonResponse({"error": response.text}, status=response.status_code)
