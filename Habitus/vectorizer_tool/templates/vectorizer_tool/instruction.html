@@ -5,5 +5,28 @@
 {% block content%}
 <h2 class="title">Instructions for Vectorizer Tool</h2>
 <p>Welcome to the Vectorizer Tool! This tool allows you to convert images into vector graphics
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Vectorizer Test UI</title>
+</head>
+<body>
+    <h2>Vectorizer Upload Form</h2>
+    <form action="/vectorize1234/" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <label>Image:</label>
+        <input type="file" name="image" required><br><br>
+
+        <label>Output Format:</label>
+        <select name="format">
+            <option value="png">PNG</option>
+            <option value="svg">SVG</option>
+        </select><br><br>
+
+        <button type="submit">Upload & Convert</button>
+    </form>
+</body>
+</html>
+
 
 {% endblock content %}

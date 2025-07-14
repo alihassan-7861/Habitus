@@ -115,6 +115,7 @@ class ImageUploadManager {
         this.imageOriginalHeight = 0;
         this.initEventListeners();
     }
+
     initEventListeners() {
         this.browseBtn.addEventListener('click', () => this.fileInput.click());
         this.fileInput.addEventListener('change', (e) => this.handleFileSelect(e.target.files[0]));
@@ -130,6 +131,7 @@ class ImageUploadManager {
             this.handleFileSelect(file);
         });
     }
+
     handleFileSelect(file) {
         if (!file) return;
         if (!Utils.validateFileType(file)) {
@@ -144,81 +146,54 @@ class ImageUploadManager {
         this.displayUploadedImage(file);
         Utils.showNotification('Image uploaded successfully!', 'success');
     }
-   displayUploadedImage(file) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        this.uploadArea.innerHTML = `
-            <div class="uploaded-wrapper">
-                <img src="${e.target.result}" alt="Uploaded image" class="uploaded-image">
-                <button class="browse-btn">Choose Another Image</button>
-            </div>
-        `;
-        const newBrowseBtn = this.uploadArea.querySelector('.browse-btn');
-        newBrowseBtn.addEventListener('click', () => this.fileInput.click());
-    };
-    reader.readAsDataURL(file);
-}
 
-  showOutput(blob) {
-    const url = window.URL.createObjectURL(blob);
+    displayUploadedImage(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            this.uploadArea.innerHTML = `
+                <div class="uploaded-wrapper">
+                    <img src="${e.target.result}" alt="Uploaded image" class="uploaded-image">
+                    <button class="browse-btn">Choose Another Image</button>
+                </div>
+            `;
+            const newBrowseBtn = this.uploadArea.querySelector('.browse-btn');
+            newBrowseBtn.addEventListener('click', () => this.fileInput.click());
+        };
+        reader.readAsDataURL(file);
+    }
+
+    showOutput(blob) {
     const ext = blob.type.includes('svg') ? 'svg' : 'png';
+    const contentType = blob.type;
 
-    // Show image inside the output area
+    const url = URL.createObjectURL(new Blob([blob], { type: contentType }));
+
+    // Show image in output area
     this.outputArea.innerHTML = `
         <div class="output-result">
             <p class="vector-success">✓ Vectorization Complete!</p>
-            <img src="${url}" alt="Vectorized Output" />
+            <img id="vectorResultImage" src="${url}" alt="Vectorized Output" onerror="this.style.display='none'; Utils.showNotification('⚠️ Failed to render the output image', 'error');"/>
         </div>
     `;
 
-    // Remove old download wrapper if it exists
+    // Store DataURL for preview or download
+    const reader = new FileReader();
+    reader.onload = () => {
+        sessionStorage.setItem("vectorizedImage", reader.result);
+    };
+    reader.readAsDataURL(blob);
+
+    // Show Continue button
+    const continueBtnWrapper = Utils.getEl("continueBtnWrapper");
+    if (continueBtnWrapper) continueBtnWrapper.style.display = "block";
+
+    // Remove any old download buttons
     const existingWrapper = document.querySelector('.download-wrapper');
-    if (existingWrapper) {
-        existingWrapper.remove();
-    }
-
-    // Create a centered wrapper div
-    const wrapper = document.createElement('div');
-    wrapper.className = 'download-wrapper';
-
-    // Create the download link
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `vectorized_output.${ext}`;
-    link.className = 'download-link';
-    link.textContent = 'Download result';
-
-    // Append link to wrapper
-    wrapper.appendChild(link);
-
-    // Append wrapper to the image section (outside of outputArea)
-    document.querySelector('.image-section').appendChild(wrapper);
+    if (existingWrapper) existingWrapper.remove();
+}
 }
 
-
-
-
-
-}
-
-class FormValidator {
-    constructor() {
-        this.rules = CONFIG.validation;
-    }
-    validate(data) {
-        const errors = [];
-        if (!Utils.validateNumber(data.width, this.rules.minWidth, this.rules.maxWidth)) 
-            errors.push(`Width must be between ${this.rules.minWidth} and ${this.rules.maxWidth}`);
-        if (!Utils.validateNumber(data.height, this.rules.minHeight, this.rules.maxHeight)) 
-            errors.push(`Height must be between ${this.rules.minHeight} and ${this.rules.maxHeight}`);
-        if (!Utils.validateNumber(data.level_of_details, this.rules.minDetail, this.rules.maxDetail))
-            errors.push(`Detail level must be between ${this.rules.minDetail} and ${this.rules.maxDetail}`);
-        if (!Utils.validateNumber(data.minimum_area, this.rules.minArea, this.rules.maxArea))
-            errors.push(`Minimum area must be between ${this.rules.minArea} and ${this.rules.maxArea}`);
-        return errors;
-    }
-}
-
+// VectorizerApp — unchanged except handleSubmit
 class VectorizerApp {
     constructor() {
         this.form = Utils.getEl('parametersForm');
@@ -229,45 +204,32 @@ class VectorizerApp {
         this.initInputConstraints();
     }
 
-initEventListeners() {
-    this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+    initEventListeners() {
+        this.form.addEventListener('submit', (e) => this.handleSubmit(e));
 
-    const widthInput = Utils.getEl('width');
-    const heightInput = Utils.getEl('height');
+        const widthInput = Utils.getEl('width');
+        const heightInput = Utils.getEl('height');
 
-    // Custom mapping
-    const pairMapping = {
-        "45": "30",
-        "60": "40",
-        "90": "60"
-    };
+        const pairMapping = { "45": "30", "60": "40", "90": "60" };
+        let isSyncing = false;
 
-    let isSyncing = false;
+        widthInput.addEventListener('change', () => {
+            if (isSyncing) return;
+            isSyncing = true;
+            const w = widthInput.value;
+            if (pairMapping[w]) heightInput.value = pairMapping[w];
+            isSyncing = false;
+        });
 
-    widthInput.addEventListener('change', () => {
-        if (isSyncing) return;
-        isSyncing = true;
-        const w = widthInput.value;
-        if (pairMapping[w]) {
-            heightInput.value = pairMapping[w];
-        }
-        isSyncing = false;
-    });
-
-    heightInput.addEventListener('change', () => {
-        if (isSyncing) return;
-        isSyncing = true;
-        const h = heightInput.value;
-        const reverseMatch = Object.entries(pairMapping).find(([k, v]) => v === h);
-        if (reverseMatch) {
-            widthInput.value = reverseMatch[0];
-        }
-        isSyncing = false;
-    });
-}
-
-
-
+        heightInput.addEventListener('change', () => {
+            if (isSyncing) return;
+            isSyncing = true;
+            const h = heightInput.value;
+            const reverseMatch = Object.entries(pairMapping).find(([k, v]) => v === h);
+            if (reverseMatch) widthInput.value = reverseMatch[0];
+            isSyncing = false;
+        });
+    }
 
     initInputConstraints() {
         const constraints = [];
@@ -294,23 +256,18 @@ initEventListeners() {
             return;
         }
 
-             const data = new FormData();
-                data.append('image', this.uploadManager.uploadedFile);
+        const data = new FormData();
+        data.append('image', this.uploadManager.uploadedFile);
 
-                // Always manually get selected output format
-                const selectedFormat = document.querySelector('input[name="output_format"]:checked');
-                if (selectedFormat) {
-                    data.append('output_format', selectedFormat.value);
-                }
+        const selectedFormat = document.querySelector('input[name="output_format"]:checked');
+        if (selectedFormat) data.append('output_format', selectedFormat.value);
 
-                // Append all other form fields
-                Object.entries(formData).forEach(([key, value]) => {
-                    if (key !== 'maximum_colors' && key !== 'output_format') {
-                        data.append(key, value);
-                    }
-                });
+        Object.entries(formData).forEach(([key, value]) => {
+            if (key !== 'maximum_colors' && key !== 'output_format') {
+                data.append(key, value);
+            }
+        });
 
-  
         Utils.showNotification('Submitting to server...', 'info');
         Utils.getEl('loadingSpinner').style.display = 'block';
 
@@ -332,6 +289,31 @@ initEventListeners() {
             Utils.getEl('loadingSpinner').style.display = 'none';
             Utils.showNotification('Server error. Please try again.', 'error');
         });
+    }
+}
+
+// ✅ Continue Button Logic (used in HTML)
+function continueToNextPage() {
+    window.location.href = "/test-pbn/";
+}
+
+// Start the app
+
+class FormValidator {
+    constructor() {
+        this.rules = CONFIG.validation;
+    }
+    validate(data) {
+        const errors = [];
+        if (!Utils.validateNumber(data.width, this.rules.minWidth, this.rules.maxWidth)) 
+            errors.push(`Width must be between ${this.rules.minWidth} and ${this.rules.maxWidth}`);
+        if (!Utils.validateNumber(data.height, this.rules.minHeight, this.rules.maxHeight)) 
+            errors.push(`Height must be between ${this.rules.minHeight} and ${this.rules.maxHeight}`);
+        if (!Utils.validateNumber(data.level_of_details, this.rules.minDetail, this.rules.maxDetail))
+            errors.push(`Detail level must be between ${this.rules.minDetail} and ${this.rules.maxDetail}`);
+        if (!Utils.validateNumber(data.minimum_area, this.rules.minArea, this.rules.maxArea))
+            errors.push(`Minimum area must be between ${this.rules.minArea} and ${this.rules.maxArea}`);
+        return errors;
     }
 }
 

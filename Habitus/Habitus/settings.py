@@ -24,11 +24,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-u)(lm5oy7viljyesorc48)4h-k2pe2qwidap6nyip_6)h$md5s'
+# settings.py
+VECTOR_API_KEY = "irgpg1felb5at6r2tc1l1t7d7ucdfevdbqkc7bvsic0tvmu36rc4"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
-ALLOWED_HOSTS = ['.vercel.app', '127.0.1','now.sh' ]
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '.vercel.app', '.now.sh']
 
 
 # Application definition
@@ -120,17 +122,16 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
-
+STATIC_URL = '/static/'
 
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),
+    os.path.join(BASE_DIR, 'static'),  # <- This is now correct
 ]
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # ✅ Required
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-MEDIA_URL='/images/'
-MEDIA_ROOT=os.path.join(BASE_DIR, 'static/images')
+MEDIA_URL = '/images/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'static/images')
 
 
 load_dotenv()

@@ -11,7 +11,7 @@
         <img src="{% static 'images/habitus_logo.png' %}" alt="Habitus Logo" class="logo" />
         <div class="description">
             <div class="indicator"></div>
-            <span>Uses the Habitus® color palette with 24de colors for vectorization.</span>
+            <span>Uses the Habitus® color palette with 24 colors for vectorization.</span>
         </div>
     </header>
 
@@ -204,7 +204,7 @@
 
 <!-- Download Button (appended dynamically) -->
 <!-- <div id="downloadLinkContainer" style="text-align:center; margin-top: 20px;"></div> -->
-<div id="downloadDialog" class="modal" style="display:none;">
+<!-- <div id="downloadDialog" class="modal" style="display:none;">
   <div class="modal-content">
     <h3>Select Output Size</h3>
     <form id="sizeOptions">
@@ -217,9 +217,13 @@
       <button id="cancelDownload">Cancel</button>
     </div>
   </div>
-</div>
+</div> 
 
-        </div>
+        </div>-->
+        <div id="continueBtnWrapper" style="text-align:center; margin-top: 15px; display: none;">
+        <button class="vectorize-btn" onclick="continueToNextPage()">Continue</button>
+    </div>
+</div>
 
 
     </section>

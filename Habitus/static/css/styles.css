@@ -988,6 +988,20 @@
     animation: pulse 2s ease-in-out infinite;
 }
 
+.continue-btn {
+    background: #4CAF50;
+    color: white;
+    padding: 12px 24px;
+    font-size: 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    border: none;
+    margin-top: 15px;
+}
+
+.continue-btn:hover {
+    background-color: #45a049;
+}
 
 
         .tooltip {
