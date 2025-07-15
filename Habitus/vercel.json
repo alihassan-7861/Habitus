@@ -4,13 +4,9 @@
     {
       "src": "Habitus/wsgi.py",
       "use": "@vercel/python",
-      "config": { "maxLambdaSize": "15mb", "runtime": "python3.9" }
-    },
-    {
-      "src": "build_files.sh",
-      "use": "@vercel/static-build",
       "config": {
-        "distDir": "staticfiles_build"
+        "maxLambdaSize": "15mb",
+        "runtime": "python3.9"
       }
     }
   ],
@@ -23,5 +19,7 @@
       "src": "/(.*)",
       "dest": "Habitus/wsgi.py"
     }
-  ]
+  ],
+  "buildCommand": "./build_files.sh",  // ✅ This will actually run your build script
+  "outputDirectory": "staticfiles_build" // ✅ optional, depending on structure
 }
