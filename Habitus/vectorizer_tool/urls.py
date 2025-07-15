@@ -10,8 +10,5 @@ urlpatterns = [
     path('test-pbn/', views.test_pbn_frontend, name='test_pbn_frontend'),
     path("generate-pbn/", PaintByNumberView.as_view(), name="generate_pbn"),
 
-        # path('vectorize23/', vectorize_image, name='vectorize_image'),
-    path("vectorize1234/", MultiFormatVectorizerView.as_view(), name="vectorize"),
-    path("vectorize/ui/", test_upload_ui, name="vectorize_ui"),  # UI form
-
+      
 ]
