@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "buildCommand": "./build_files.sh",
   "builds": [
     {
       "src": "Habitus/wsgi.py",
@@ -19,7 +20,5 @@
       "src": "/(.*)",
       "dest": "Habitus/wsgi.py"
     }
-  ],
-  "buildCommand": "./build_files.sh",  // ✅ This will actually run your build script
-  "outputDirectory": "staticfiles_build" // ✅ optional, depending on structure
+  ]
 }
